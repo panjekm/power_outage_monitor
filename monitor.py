@@ -4,6 +4,7 @@ import time
 import argparse
 import requests
 import config
+import ntplib
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--boot", help="Assume this script was just started on a fresh boot",
@@ -19,8 +20,20 @@ if args.boot:
     heartbeat_date_time = datetime.strptime(input_file.read(), '%d/%m/%Y %H:%M:%S')
     input_file.close()
 
+    # Make sure the current time is correct.
+    while True:
+        try:
+            ntp_client = ntplib.NTPClient()
+            response = ntp_client.request('pool.ntp.org', version=3)
+            ntp_time_now = datetime.fromtimestamp(response.tx_time)
+            break
+        except Exception as e:
+            print("NTP threw an exception! Retrying...")
+            time.sleep(60)
+
+
     # Determine the number of days, hours, minutes, and seconds the system was down for
-    time_delta = datetime.now() - heartbeat_date_time
+    time_delta = ntp_time_now - heartbeat_date_time
     days = time_delta.days
     seconds = time_delta.seconds
     hours, remainder = divmod(seconds, 3600)
@@ -63,4 +76,4 @@ while True:
     output_file.write(current_date_time)
     output_file.close()
     # print("Heartbeat updated:",current_date_time)
-    time.sleep(5)
+    time.sleep(10)
