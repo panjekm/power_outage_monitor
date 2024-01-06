@@ -20,6 +20,8 @@ if args.boot:
     heartbeat_date_time = datetime.strptime(input_file.read(), '%d/%m/%Y %H:%M:%S')
     input_file.close()
 
+    boot_time_start = datetime.now()
+
     # Make sure the current time is correct.
     while True:
         try:
@@ -31,9 +33,10 @@ if args.boot:
             print("NTP threw an exception! Retrying...")
             time.sleep(60)
 
+    boot_time_delay = datetime.now() - boot_time_start
 
     # Determine the number of days, hours, minutes, and seconds the system was down for
-    time_delta = ntp_time_now - heartbeat_date_time
+    time_delta = ntp_time_now - heartbeat_date_time - boot_time_delay
     days = time_delta.days
     seconds = time_delta.seconds
     hours, remainder = divmod(seconds, 3600)
